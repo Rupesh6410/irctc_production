@@ -8,6 +8,13 @@ const config = {
   KAFKA_BROKER: process.env.KAFKA_BROKER,
   KAFKA_CLIENT_ID: process.env.KAFKA_CLIENT_ID,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || "noreply@yourdomain.com",
+
+  OTP_TTL: process.env.OTP_TTL || 300,
+  OTP_RATE_MAX_PER_HOUR: process.env.OTP_RATE_MAX_PER_HOUR || 5,
+  OTP_MAX_VERIFY_ATTEMPTS: process.env.OTP_MAX_VERIFY_ATTEMPTS || 5,
+  OTP_HMAC_SECRET: process.env.OTP_HMAC_SECRET || "09dc0abbb2961391d822610b31b912e3231d4d2745c76b1ef4765af4c62f6079",
 
 }
 module.exports = { config };

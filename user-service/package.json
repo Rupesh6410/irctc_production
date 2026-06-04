@@ -28,6 +28,7 @@
     "kafkajs": "^2.2.4",
     "otp-generator": "^4.0.1",
     "pg": "^8.21.0",
+    "resend": "^6.12.4",
     "winston": "^3.19.0"
   },
   "devDependencies": {

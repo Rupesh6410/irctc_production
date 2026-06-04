@@ -1,9 +1,9 @@
 // src/utils/email.js
 
-const sgMail = require("@sendgrid/mail");
+const { Resend } = require("resend");
 const { config } = require("../config");
 
-sgMail.setApiKey(config.SENDGRID_API_KEY);
+const resend = new Resend(config.RESEND_API_KEY);
 
 function getOtpTemplate(otp) {
   return `
@@ -45,7 +45,7 @@ function getOtpTemplate(otp) {
       </div>
 
       <p>
-        This code will expire in <strong> 5 minutes</strong>.
+        This code will expire in <strong>5 minutes</strong>.
       </p>
 
       <p>If this wasn't you, please ignore this email.</p>
@@ -62,21 +62,24 @@ function getOtpTemplate(otp) {
 
 async function sendOtpEmail(email, otp) {
   try {
-    const msg = {
+    const { data, error } = await resend.emails.send({
+      from: config.RESEND_FROM_EMAIL,
       to: email,
-      from: config.SENDGRID_FROM_EMAIL, // verified sender
       subject: "Verify your email address",
       html: getOtpTemplate(otp),
-    };
+    });
 
-    await sgMail.send(msg);
+    if (error) {
+      throw error;
+    }
 
     return {
       success: true,
       message: "OTP email sent successfully",
+      data,
     };
   } catch (error) {
-    console.error("SendGrid Error:", error.response?.body || error);
+    console.error("Resend Error:", error);
 
     throw new Error("Failed to send OTP email");
   }

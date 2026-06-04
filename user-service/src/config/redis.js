@@ -7,7 +7,7 @@ class RedisClient {
      static isConnected = false;
 
      constructor(){
-        
+          // prevent direct instantiation
 
      }
 
@@ -81,7 +81,6 @@ class RedisClient {
           }
      }
 }
-
 
 
 module.exports = {
