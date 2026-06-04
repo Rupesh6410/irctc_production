@@ -1,8 +1,8 @@
 const { ConflictError, BadRequestError } = require("../utils/error");
 const bcrypt = require('bcrypt');
 const prisma = require("../config/prisma");
-const { sendOtpEmail } = require("../utils/email");
-const { generateAndStoreOtp } = require("../utils/otp");
+const { sendOtpEmail, verifyOTPEmail } = require("../utils/email");
+const { generateAndStoreOtp, verifyOtp } = require("../utils/otp");
 
 const sendOtp = async (firstname, lastname, email, password) => {
     const existingUser = await prisma.user.findUnique({
@@ -36,6 +36,10 @@ const verifyOTP = async (otp, otpSessionId) => {
             emailVerified:true
         }
     })
+    await verifyOTPEmail(meta);
+    return user;
+
+
 }
 module.exports = {
     sendOtp,

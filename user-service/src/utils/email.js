@@ -59,6 +59,57 @@ function getOtpTemplate(otp) {
     </div>
   `;
 }
+function getEmailVerifiedTemplate(meta) {
+  return `
+    <div style="
+      font-family: Arial, sans-serif;
+      max-width: 420px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      background: #ffffff;
+    ">
+      <h2 style="color:#16a34a;">✅ Email Verified</h2>
+
+      <p>Hi ${meta.firstname || "User"},</p>
+
+      <p>
+        Your email address has been successfully verified.
+      </p>
+
+      <p>
+        Your account is now active and you can continue using the platform.
+      </p>
+
+      <hr style="border:none;border-top:1px solid #eee;margin:25px 0;" />
+
+      <p style="font-size:14px;color:#888;">
+        Thanks,<br/>
+        <strong>Team YourApp</strong>
+      </p>
+    </div>
+  `;
+}
+async function verifyOTPEmail(meta) {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: config.RESEND_FROM_EMAIL,
+      to: meta.email,
+      subject: "Email verified successfully",
+      html: getEmailVerifiedTemplate(meta),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Resend Error:", error);
+    throw new Error("Failed to send verification success email");
+  }
+}
 
 async function sendOtpEmail(email, otp) {
   try {
@@ -88,4 +139,5 @@ async function sendOtpEmail(email, otp) {
 module.exports = {
   sendOtpEmail,
   getOtpTemplate,
+  verifyOTPEmail,
 };
