@@ -1,7 +1,8 @@
-const { BadRequestError, UnauthorizedError } = require("../utils/error");
+const { BadRequestError , UnauthorizedError } = require("../utils/error");
 const asyncHandler = require('../utils/asyncHandler');
 const {config} = require('../config');
 const authService = require('../services/auth.service');
+const getDeviceFingerprint = require('../utils/deviceFingerprint');
 
 exports.sendOTP = asyncHandler(async (req, res) => {
     const {firstname , lastname , email , password , confirmPassword} = req.body;
@@ -71,30 +72,20 @@ exports.rotateRefreshToken = asyncHandler(async(req, res) =>{
      }
      const deviceId = getDeviceFingerprint(req);
      const {newAccessToken, newRefreshToken} = await authService.rotateRefreshToken(refreshToken, deviceId);
-     res.cookie("accessToken", newAccessToken, cookieOptions(config.ACCESS_TOKEN_EXP_SEC * 1000))
-     res.cookie("refreshToken", newRefreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
-     .status(200).json({
+     res.cookie("accessToken", newAccessToken, {
+        maxAge: config.REFRESH_TOKEN_EXP_SEC * 1000, 
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict"
+     }).status(200);
+
+     res.cookie("refreshToken", newRefreshToken, {
+        maxAge: config.ACCESS_TOKEN_EXP_SEC * 1000, 
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict"
+     }).status(200).json({
           success: true,
           message: "Access and Refresh token reissued"
-     })
-})
-
-
-exports.verifyGoogleIdToken = asyncHandler(async(req, res) =>{
-     const {idToken} = req.body;
-     if(!idToken){
-          throw new BadRequestError("Invalid Google ID Token", "INVALID TOKEN")
-     }
-
-     const deviceId = getDeviceFingerprint(req);
-     
-     const {accessToken, refreshToken, loggedInUser} = await authService.verifyGoogleIdToken(idToken, deviceId);
-     
-     res.cookie("accessToken", accessToken, cookieOptions(config.ACCESS_TOKEN_EXP_SEC * 1000))
-     res.cookie("refreshToken", refreshToken, cookieOptions(config.REFRESH_TOKEN_EXP_SEC * 1000))
-     .status(200).json({
-          success: true,
-          message: "Logged in successfully",
-          loggedInUser
      })
 })

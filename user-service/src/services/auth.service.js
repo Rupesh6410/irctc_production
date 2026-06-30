@@ -1,9 +1,15 @@
-const { ConflictError, BadRequestError } = require("../utils/error");
+const { ConflictError, BadRequestError , UnauthorizedError , ForbiddenError } = require("../utils/error");
 const bcrypt = require('bcrypt');
 const prisma = require("../config/prisma");
 const { sendOtpEmail, verifyOTPEmail } = require("../utils/email");
 const { generateAndStoreOtp, verifyOtp } = require("../utils/otp");
 const {generateAccessToken, generateRefreshToken, verifyRefreshToken} = require('../utils/auth');
+const jwt = require('jsonwebtoken');
+const { config } = require("../config");
+const {redis} = require('../config/redis');
+
+
+
 
 const sendOtp = async (firstname, lastname, email, password) => {
     const existingUser = await prisma.user.findUnique({
@@ -67,25 +73,24 @@ const login = async(email, password, deviceId) =>{
      await redis.set(`user:${existingUser.id}`, JSON.stringify(safeUser), 'EX', config.REDIS_USER_TTL);
      return {accessToken, refreshToken, loggedInUser: safeUser};
 }
-const rotateRefreshToken = async(refreshToken, deviceId) =>{
-    const payload = verifyRefreshToken(refreshToken);
-    const {id:userId , jti} = payload;
-    const storedJti = await redis.get(`refresh:${userId}:${deviceId}`);
-    if (!storedJti){
-        throw new UnauthorizedError("Invalid refresh token", "INVALID_REFRESH_TOKEN");
-    }
-    
-    if(storedJti !== jti){
-        throw new UnauthorizedError("Invalid refresh token", "INVALID_REFRESH_TOKEN");
-    }
-    const newAccessToken = generateAccessToken(payload.id);
-    const newRefreshToken = generateRefreshToken(payload.id);
-    const {jti: newJti} = jwt.decode(newRefreshToken);
-    await redis.set(`refresh:${payload.id}:${deviceId}`, newJti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
-    return {newAccessToken, newRefreshToken};
-    
-}
 
+const rotateRefreshToken = async(refreshToken, deviceId) =>{
+     const payload = verifyRefreshToken(refreshToken);
+     const {id: userId, jti} = payload;
+     const storedJti = await redis.get(`refresh:${userId}:${deviceId}`);
+     if(!storedJti){
+          throw new ForbiddenError("Session Expired", "Login AGAIN")
+     }
+     if(storedJti !== jti){
+          await redis.del(`refresh:${userId}:${deviceId}`);
+          throw new ForbiddenError("Refresh token reused", "LOGIN AGAIN")
+     }
+     const newAccessToken = generateAccessToken(payload.id);
+     const newRefreshToken = generateRefreshToken(payload.id);
+     const {jti: newJti} = jwt.decode(newRefreshToken);
+     await redis.set(`refresh:${payload.id}:${deviceId}`, newJti, 'EX', config.REFRESH_TOKEN_EXP_SEC);
+     return {newAccessToken, newRefreshToken};
+}
 module.exports = {
     sendOtp,
     verifyOTP,

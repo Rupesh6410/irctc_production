@@ -11,7 +11,7 @@ function getDeviceFingerprint(req) {
           .createHash("sha256")
           .update(raw)
           .digest("hex")
-          .slice(0, 16);
+          .slice(0, 16); // short device id
 }
 
 module.exports = getDeviceFingerprint;

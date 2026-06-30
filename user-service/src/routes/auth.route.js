@@ -5,7 +5,7 @@ const {sendOTP, verifyOTP, rotateRefreshToken, login} = require('../controllers/
 
 router.post('/send-otp', sendOTP);
 router.post('/verify-otp', verifyOTP);
-router.post('/refresh-token', rotateRefreshToken);
+router.get('/refresh-token', rotateRefreshToken);
 router.post('/login', login);
 
 module.exports = router;
